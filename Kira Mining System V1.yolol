@@ -1,0 +1,94 @@
+//==============================>
+// CHIP 0 - Memory Chip Globals |
+//==============================>
+MML // MiningModeLatch
+MPL // MiningPulseLatch
+MBL // MiningBurstLatch
+MLL // MiningLaserLatch
+MCL // MiningCollectorLatch
+MLPV // MiningLaserPatternValue
+MMPV // MiningModePatternValue
+MMI // MiningModeInit
+
+//======================================>
+// CHIP 1 - Safety & Laser Mode Latches |
+//======================================>
+if :MiningMode==1 then :MML=1 :MCL=1 else :MML=0 :MCL=0 end
+if :Pulse==1 then :MPL=1 else :MPL=0 end
+if :Burst==1 then :MBL=1 else :MBL=0 end
+if :Laser==1 then :MLL=1 else :MLL=0 end goto 1
+
+//=================================>
+// CHIP 2 - Session Initialization |
+//=================================>
+MMN=0 if :MMLK==0 then :LaserPitch=-40 :BaseLaserRot=0 goto 1 end
+if MMN==0 AND :MML==1 then MMN=1 goto 4 end
+if :MML==0 then :MMI=0 goto 1 end goto 3
+:LaserPitch=90 :BaseLaserRot=90 :MMI=1 goto 3
+
+//================================================>
+// CHIP 3 - Mining Laser Pattern State Management |
+//================================================>
+if :MML==0 OR :MMI==0 OR :MML==0 then :MLPV=1 goto 1 end
+if :MML==1 AND :MLL==1 AND :MPL==0 AND :MBL==0 then :MLPV=2 end
+if :MML==1 AND :MLL==1 AND :MPL==1 AND :MBL==0 then :MLPV=3 end
+if :MML==1 AND :MLL==1 AND :MPL==0 AND :MBL==1 then :MLPV=4 end
+if :MML==1 AND :MLL==1 AND :MPL==1 AND :MBL==1 then :MLPV=5 end goto 1
+
+//====================================================>
+// CHIP 4 - Rotation & Pitch Pattern State Management |
+//====================================================>
+if :MinePatternA==0 AND :MinePatternB==0 then :MMPV=1 end
+if :MinePatternA==-1 AND :MinePatternB==0 then :MMPV=2 end
+if :MinePatternA==1 AND :MinePatternB==0 then :MMPV=3 end
+if :MinePatternA==0 AND :MinePatternB==1 then :MMPV=4 end
+if :MinePatternA==-1 AND :MinePatternB==1 then :MMPV=5 end
+if :MinePatternA==1 AND :MinePatternB==1 then :MMPV=6 end goto 1
+
+//================================>
+// CHIP 5 - Mining Laser Patterns |
+//================================>
+s=0 goto (:MLPV+1)
+s++ :LzL=0 :LzR=0 goto 1
+s++ :LzL=1 :LzR=1 goto 1
+s++ :LzL=1 :LzR=1 if s==5 then goto 20 end goto 7
+s++ :LzL=0 :LzR=1 goto 8
+s++ :LzL=1 :LzR=1 goto 9
+s++ goto 4
+s++ :LzL=1 :LzR=0 if s==2 then goto 5 end goto 19
+s++ :LzL=0 :LzR=0
+s++ :LzL=1 :LzR=1
+s++ :LzL=0 :LzR=0
+s++ :LzL=1 :LzR=1
+s++ :LzL=0 :LzR=0
+s++ :LzL=1 :LzR=0
+s++ :LzL=0 :LzR=1
+s++ :LzL=1 :LzR=0
+s++ :LzL=0 :LzR=1
+s++ :LzL=1 :LzR=0
+s++ :LzL=0 :LzR=1
+s++ :LzL=0 :LzR=0
+
+//===========================================>
+// CHIP 6 - Turret Rotation & Pitch Patterns |
+//===========================================>
+s=0 r=0 if :MMI==1 then goto (:MMPV+1) else goto 1 end
+:PitchVel=3 :RotVel=3 :BaseLaserRot=90 :LaserPitch=90 goto 1
+:PitchVel=0.1 :RotVel=3 :BaseLaserRot=90 :LaserPitch=90 goto 8
+:PitchVel=3 :RotVel=0.8 rot=:BaseLaserRot :LaserPitch=90 goto 10
+:PitchVel=3 :RotVel=3 :BaseLaserRot=0 :LaserPitch=90 goto 1
+:PitchVel=0.1 :RotVel=3 :BaseLaserRot=0 :LaserPitch=90 goto 8
+:PitchVel=3 :RotVel=0.8 rot=:BaseLaserRot :LaserPitch=90 goto 12
+r=8 :LaserPitch=80 if s<8 then goto 20 end s=0 goto 9
+r=9 :LaserPitch=100 if s<7 then goto 20 end goto 1
+r=10 if rot>=180 then rot-=360 end rot+= 18 :BaseLaserRot=rot
+if :MMPV!=3 then goto 1 end goto 10
+s++ if rot>=180 then rot-=360 end rot+=27 :BaseLaserRot=rot
+if s%2==0 then :LaserPitch=93 else :LaserPitch=87 end
+if s>= 80 then s=0 end if :MMPV!=7 then goto 1 end goto 12
+
+
+
+
+
+s++ goto r
